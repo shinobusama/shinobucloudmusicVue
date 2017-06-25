@@ -32,6 +32,7 @@ export default{
 		let self = this;
 		bus.$on("userEvent2",function(msg){
 			self.message=msg;
+		
 		})
 	}
 }
@@ -74,7 +75,7 @@ export default{
 			    			background-color: #56D486;
 			    		}
 		    		}
-		    		&:hover{
+		    		&:active{
 			    		background-color: #F2EEEE;
 			    	}
 	    		}

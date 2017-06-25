@@ -1,17 +1,17 @@
 <template>
 	<div id="player">
 		<div class="left">
-			<span class="up"><img class="upicon" src="./主题-上一曲.svg" height="32" width="32" alt=""></span>
+			<span class="up"><img class="upicon" src="./主题-上一曲.svg" height="32" width="32" @click="up"></span>
 			<span class="play"><audio ref="audio" :src="msgurl">
 			</audio><img @click="play" class="playicon" :src="num?playstate.on:playstate.pause" height="32" width="32"></span>
-			<span class="down"><img class="downicon" src="./主题-下一曲.svg" height="32" width="32" alt=""></span>
+			<span class="down"><img class="downicon" src="./主题-下一曲.svg" height="32" width="32" alt="" @click="down"></span>
 		</div>
 		<div class="middle">
 			<p class="starttime">{{musicctime}}</p><span class="rangebg"><span class="range" ref="range" :style="{'-webkit-transform':'translateX(' + countlong +'px)' }"></span></span><p class="totaltime">{{musictime}}</p>
 			<span class="sound"><img src="./音量.svg" width="16" height="16"></span><span class="range2bg"><span class="range2"></span></span>
 		</div>
 		<div class="right">
-			<span class="loop"><img src="./循环.svg" alt=""></span>
+			<span class="loop"><img src="./循环.svg" @click="loop"></span>
 			<span class="lyic"><p>词</p></span>
 			<span class="list"><img src="./工单列表.svg" alt=""></span>
 		</div>
@@ -27,26 +27,33 @@ export default{
 			playstate:{
 				on:require('./主题-播放.svg'),
 				pause:require('./主题-暂停.svg'),
-			},
-			msgurl:{},
-			num:false,
-			url:('../../../static/46.mp3'),
-			length:0,
-			atime:"",
-			btime:"",
-			updatetime:0
+			},  
+			msgurl:{},  //歌曲链接
+			msgurls:[], //所有歌曲链接
+			msgurlsindex:0,  //所有歌曲索引
+			num:false,  //播放按钮状态
+			length:0,  //歌曲长度
+				
+			updatetime:0 //歌曲时长更新
 		}
 			
 	},
 	created(){
 		let self=this;
 		bus.$on("userEvent3",function(msg){
-			console.log(msg);
-			self.msgurl=msg;
-		});		
+			
+			self.msgurl=msg;  //获取返回歌曲链接
+			self.num=false;		
+		});	
+		bus.$on("userEvent4",function(msg){
+			self.msgurls[self.msgurlsindex]=msg;
+			self.msgurlsindex=self.msgurlsindex+1;
+			//获取返回歌曲列表链接
+		});	
+
 	},
 	computed:{
-		musictime(){
+		musictime(){   	//歌曲总时间
 			let a=0,b=0;
 			if(this.length===0){
 				return "00:00";
@@ -63,19 +70,24 @@ export default{
 			}
 			
 		},
-		musicctime(){
+		musicctime(){  //播放动态时间
 			let a=0,b=0;
-			a = Math.floor(this.updatetime/60);
-			b = Math.floor((this.updatetime/60-a)*60)
-			if(a<10&&b>10){
-				return "0"+a+":"+b;
-			}else if (a<10&&b<10) {
-				return "0"+a+":"+"0"+b;
-			}else{
-				return a+":"+b;
+			if(this.updatetime===0){
+				return "00:00";
+			}else {
+				a = Math.floor(this.updatetime/60);
+				b = Math.floor((this.updatetime/60-a)*60)
+				if(a<10&&b>=10){
+					return "0"+a+":"+b;
+				}else if (a<10&&b<10) {
+					return "0"+a+":"+"0"+b;
+				}else{
+					return a+":"+b;
+				}
 			}
+			
 		},
-		countlong(){
+		countlong(){  //进度条长度
 			let total = 0;
 			total = this.updatetime/this.length*438;
 			if(total==438){
@@ -85,22 +97,34 @@ export default{
 		}
 	},
 	watch:{
-		updatetime:function(val){
+		updatetime:function(val){   //歌曲时间监听
 			setTimeout(function(){	
 				this.updatetime=val;
 			},1000);
 			if(this.$refs.audio.ended){
 				this.num=false;
 			}
+		},
+		length:function(val){
+			if(val){
+				this.length=val;
+				
+			}else{
+				this.length=0;
+			}
 		}
+
 	},
 	methods:{
-		play(){
+		play(){  //播放
 			this.num=!this.num;
 			let self = this;
 			if(this.num){
+				this.$refs.audio.preload=true;
 				this.$refs.audio.play();
-				this.length=this.$refs.audio.duration;
+				this.$nextTick(()=>{
+					this.length=this.$refs.audio.duration;
+				});
 				this.$refs.audio.volume=0.2;
 				let audio = this.$refs.audio;
 				audio.ontimeupdate=function(){
@@ -111,21 +135,39 @@ export default{
 				this.$refs.audio.pause();
 				console.log("pause");
 			}
+		},
+		down(){  //下一曲
+			this.num=true;   //这里不知道怎么解决
+			if(this.msgurlsindex>0&&this.msgurlsindex<=10){
+				console.log(this.msgurlsindex);
+				this.msgurlsindex=this.msgurlsindex-1;
+			}else {
+				this.msgurlsindex=0;
+			}	
+			this.msgurl=this.msgurls[this.msgurlsindex];
+			console.log(this.msgurl);
+			this.$nextTick(()=>{
+				this.play();
+			})
+		},
+		up(){  //上一曲
+			this.num=true;   //这里不知道怎么解决
+			if(this.msgurlsindex>=0&&this.msgurlsindex<9){
+				console.log(this.msgurlsindex);
+				this.msgurlsindex=this.msgurlsindex+1;
+			}else {
+				this.msgurlsindex=9;
+			}	
+			this.msgurl=this.msgurls[this.msgurlsindex];
+			console.log(this.msgurl);
+			this.$nextTick(()=>{
+				this.play();
+			})
+		},
+		loop(){		//循环
+			this.$refs.audio.loop=true;
 		}
 	}
-	// transitions:{
-	// 	addwidth:{
-	// 		beforeEnter:function(el){
-	// 			el.style.width=0;
-	// 		},
-	// 		enter:function(el,countlong){
-	// 			el.style.webkitTransform='translate3d(${countlong}px,0,0)';
-	// 		},
-	// 		afterEnter:function(el){
-	// 			el.style.width=438;
-	// 		}
-	// 	}
-	// }
 	
 }
 </script>

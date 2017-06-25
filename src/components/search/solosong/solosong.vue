@@ -10,7 +10,7 @@
 				<li class="time">时长</li>
 				<li class="hot">热度</li>
 			</ul>
-			<ul class="totaltitle" :class="{'totaltitlebg':index%2===1}" v-for="(item,index) in msgmusic.result.songs" @click="playmsc">
+			<ul class="totaltitle" :class="{'totaltitlebg':index%2===1}" v-for="(item,index) in msgmusic.result.songs" @click="playmsc(index)" ref="musiclistnum">
 				<li class="number">{{index<9?"0"+(index+1):index+1}}</li>
 				<li class="operation"><img src="./收藏.svg" alt=""><img src="./下载.svg" alt=""></li>
 				<li class="title">{{item.name}}{{item.alias[index]}}</li>
@@ -30,9 +30,10 @@ import BScroll from 'better-scroll'
 export default{
 	data(){
 		return{
-			msgmusic:{},
-			msgmusicid:{},
-			url:""
+			msgmusic:{}, //音乐列表
+			msgmusicid:{},	//音乐id
+			url:"",  //音乐链接
+			urls:[] //音乐链接数组
 		}
 	},
 	mounted(){
@@ -45,7 +46,7 @@ export default{
       	getpost(){
       		let self = this;
 			bus.$on("userEvent",function(msg){
-				self.msgmusic=msg;
+				self.msgmusic=msg; //获取搜索返回数据
 				// setTimeout(function(){
 				// 	this.Scroll = new BScroll(self.$refs.solosong,{
 			 //        	scrollY:true,
@@ -55,6 +56,7 @@ export default{
 			 //        	HWCompositing: true
 			 //       	})
 				// },100)
+				self.playmsclist(); 
 				this.$nextTick(()=>{
 					this.Scroll = new BScroll(self.$refs.solosong,{
 			        	scrollY:true,
@@ -64,19 +66,31 @@ export default{
 			        	HWCompositing: true
 			       	})
 				})
+				//滚动初始化
 			});
       	},
-      	playmsc(){
-      		let self=this;
-      		var id = this.msgmusic.result.songs[0].id;
+      	playmsc(index){  //获取单个列表项歌曲url
+      		let self=this;	
+      		var id = this.msgmusic.result.songs[index].id;
       		axios.get("http://localhost:3000/music/url?id="+id)
 		    .then(response => {
 		    	this.msgmusicid = response.data;
 		    	this.url = self.msgmusicid;
 		    	bus.$emit('userEvent3',self.url.data[0].url);
 		    });
+      	},
+      	playmsclist(){  //获取歌曲列表歌曲所有链接
+      		let self=this;	
       		
-
+      		for(let i = 0;i<30;i++){
+      			var id = this.msgmusic.result.songs[i].id;
+      			axios.get("http://localhost:3000/music/url?id="+id)
+		    .then(response => {
+		    	this.msgmusicid = response.data;
+		    	this.urls = self.msgmusicid;
+		    	bus.$emit('userEvent4',self.urls.data[0].url);
+		    });
+      		}
       	}
 	},
 	components:{

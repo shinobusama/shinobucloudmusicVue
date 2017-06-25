@@ -3,12 +3,12 @@
 		<div class="top_left">
 			<a class="icon"><img src="./网易云音乐_自制.png" width="200" height="200">网易云音乐</a>
 			<span class="left"><a href=""><</a></span><span class="right"><a href="">></a></span>
-			<span class="search_span"><!--@click.stop.prevent="show"-->
+			<span class="search_span">
 				<router-link to="/search/solosong">
-				<input class="search" v-model="keywords" @keydown.enter="searchMsc" placeholder=" 搜索音乐，歌手，歌词，用户"/></router-link>
-				<img src="./搜索_搜索.svg" width="200" height="200">
+				<input class="search" v-model="keywords" @keydown.enter="searchMsc" @click="searchchange" placeholder=" 搜索音乐，歌手，歌词，用户"/></router-link>
+				<img :src="searchico.searchindex?searchico.on:searchico.down" @click="searchMsc">
 			</span>
-			<down_table v-show="downShow"></down_table>
+			<down_table :sugmusic="sugmusic" :downShow="downShow"></down_table>
 		</div>
 		<div class="top_right">	
 			<a href="" class="headphoto"><img src="./headphoto.jpg" width="24" height="24">
@@ -40,29 +40,43 @@ export default{
 			info_show:false,
 			keywords:"",
 			msgmusic:{},
-			kvaule:""
+			sugmusic:{},
+			kvaule:"",
+			searchico:{
+				on:require('./搜索_搜索on.svg'),
+				down:require('./搜索_搜索.svg'),
+				searchindex:false
+			}
 		}
 	},
 	methods:{
-		show(){
-           this.downShow=true;
-		},
-		hide(){
-			this.downShow=false;
-		},
 		infoShow(){
-			this.info_show = true;
+			this.info_show = !this.info_show;
 		},
-		infoHide(){
-			this.info_show = false;
+		searchchange(){
+			this.searchico.searchindex=true;
+			
 		},
 		searchMsc:function(){
-		    axios.get('http://localhost:3000/search?keywords=' + this.keywords+'&encodein=utf-8&encodeout=utf-8').then(response => {
+			this.searchico.searchindex=true;
+			this.searchSug();
+		
+		    axios.get('http://localhost:3000/search?keywords=' + this.keywords+'&limit=30').then(response => {
 		    	this.msgmusic = response.data;
 		    	bus.$emit('userEvent',this.msgmusic);
 		    	bus.$emit('userEvent2',this.keywords);
 		    });
+
+		    if(this.msgmusic){
+		    	this.searchico.searchindex=false;
+		    }
 		},
+		searchSug:function(){
+			axios.get('http://localhost:3000/search/suggest?keywords=' + this.keywords+'&encodein=utf-8&encodeout=utf-8').then((response)=>{
+				this.sugmusic = response.data;
+			})
+			this.downShow=true;
+		}
 	},
 	components:{
 		down_table,down_info,bus
@@ -125,7 +139,7 @@ export default{
 			}
 			.search_span{
 				position: relative;
-				vertical-align: top;
+				display: inline-block;
 				.search{
 					width: 190px;
 					height: 20px;
