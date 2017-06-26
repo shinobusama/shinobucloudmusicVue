@@ -20,9 +20,9 @@ npm run build --report
 
 # 展示
 
-![image](https://github.com/shinobusama/shinobucloudmusicVue/blob/master/images/%E5%BD%95%E5%88%B61.gif)
+![image](https://github.com/shinobusama/shinobucloudmusicVue/raw/master/images/%E5%BD%95%E5%88%B61.gif)
 
-![image](https://github.com/shinobusama/shinobucloudmusicVue/blob/master/images/GIF.gif)
+![image](https://github.com/shinobusama/shinobucloudmusicVue/raw/master/images/GIF.gif)
 ```
 
 For detailed explanation on how things work, checkout the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
